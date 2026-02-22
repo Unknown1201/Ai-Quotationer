@@ -1,0 +1,44 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String     @id @default(cuid())
+  email         String     @unique
+  password_hash String
+  company_name  String?
+  logo_url      String?
+  proposals     Proposal[]
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model Proposal {
+  id               String     @id @default(cuid())
+  user_id          String
+  user             User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  client_name      String
+  status           String     @default("Draft")
+  total_amount     Float      @default(0)
+  raw_input        String
+  refined_markdown String?
+  lineItems        LineItem[]
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+}
+
+model LineItem {
+  id          String   @id @default(cuid())
+  proposal_id String
+  proposal    Proposal @relation(fields: [proposal_id], references: [id], onDelete: Cascade)
+  description String
+  quantity    Int
+  unit_price  Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

@@ -1,0 +1,117 @@
+﻿AI Proposal Generator: Product Requirements Document (PRD)
+Vision
+To reduce proposal creation time from hours to minutes by leveraging AI to bridge the gap between "messy client notes" and "polished professional bids."
+User Personas
+* The Busy Freelancer: Needs to send quotes quickly between deep-work sessions.
+* Small Agency Owner: Needs consistency in brand identity across different team members' proposals.
+Functional Requirements
+Feature
+	Priority
+	Requirement Description
+	AI Content Engine
+	P0
+	Must transform raw text into "Objective," "Scope," and "Timeline" sections using Gemini.
+	Live Editor
+	P0
+	Side-by-side Markdown editor with immediate PDF preview.
+	Line-Item Calculator
+	P0
+	A dynamic table that sums up costs automatically.
+	Brand Management
+	P1
+	Support for at least 3 CSS-based templates (Corporate, Creative, Minimal).
+	Lead Status
+	P2
+	A dashboard to track if a proposal is "Draft," "Sent," or "Signed."
+	Success Metrics
+* Speed to Export: User should go from "Raw Input" to "PDF Export" in under 5 minutes.
+* Edit Rate: Low manual editing of AI-generated content (indicates high AI prompt accuracy).
+
+
+________________
+
+
+System Design Document
+High-Level Architecture
+The system follows a classic MERN-style (or similar) architecture but emphasizes the "Preview Engine" on the frontend to minimize server load.
+Data Model (PostgreSQL)
+We will use a relational structure to handle the link between leads and their specific line items.
+
+
+Table
+	Column
+	Description
+	Users
+	id
+	Primary key
+	
+
+	email
+	User email
+	
+
+	password_hash
+	Encrypted password
+	
+
+	company_name
+	User's company name
+	
+
+	logo_url
+	URL for company logo
+	Proposals
+	id
+	Primary key
+	
+
+	user_id
+	Foreign key to Users table
+	
+
+	client_name
+	The client the proposal is for
+	
+
+	status
+	Enum: Draft, Sent, Signed
+	
+
+	total_amount
+	Final calculated cost
+	
+
+	raw_input
+	Original messy client notes
+	
+
+	refined_markdown
+	AI-generated and edited proposal content
+	LineItems
+	id
+	Primary key
+	
+
+	proposal_id
+	Foreign key to Proposals table
+	
+
+	description
+	Description of the item/service
+	
+
+	quantity
+	Number of units
+	
+
+	unit_price
+	Cost per unit
+	AI Prompt Strategy
+To ensure Gemini doesn't "hallucinate" or get too chatty, the backend will wrap user input in a System Prompt:
+
+
+"You are a professional business consultant. Take the following raw notes and format them into a structured business proposal with the sections: Executive Summary, Detailed Scope, and Technical Stack. Use [Tone] tone. Output in valid Markdown only."
+PDF Generation Flow
+1. React State: Holds the Markdown and Line-Item data.
+2. @react-pdf/renderer: Consumes the state to render a PDF "component" in a hidden iframe or side-pane.
+3. Local Sync: Save drafts to the DB every 30 seconds (debounce) to prevent data loss.
