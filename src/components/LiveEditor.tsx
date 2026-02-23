@@ -239,7 +239,7 @@ export default function LiveEditor() {
                     totalAmount={totalAmount}
                     showConversion={showConversion}
                     convertedTotal={totalAmount * conversionRate}
-                    currencySymbol="₹"
+                    currencySymbol="Rs. "
                     terms={terms}
                     showSignatures={showSignatures}
                     logoUrl={logoUrl}

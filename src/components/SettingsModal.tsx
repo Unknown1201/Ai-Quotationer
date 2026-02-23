@@ -7,8 +7,9 @@ interface SettingsModalProps {
     onUpdate: () => void;
 }
 
-export default function SettingsModal({ onClose, hasCustomKey, generationCount, onUpdate }: SettingsModalProps) {
+export default function SettingsModal({ onClose, hasCustomKey, generationCount, onUpdate, initialAverageRate }: SettingsModalProps & { initialAverageRate?: number | null }) {
     const [apiKey, setApiKey] = useState("");
+    const [averageRate, setAverageRate] = useState(initialAverageRate?.toString() || "");
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState("");
 
@@ -21,7 +22,7 @@ export default function SettingsModal({ onClose, hasCustomKey, generationCount, 
             const res = await fetch("/api/auth/update", {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ custom_api_key: apiKey })
+                body: JSON.stringify({ custom_api_key: apiKey, average_rate: averageRate })
             });
             const data = await res.json();
 
@@ -68,6 +69,22 @@ export default function SettingsModal({ onClose, hasCustomKey, generationCount, 
                         />
                         <p style={{ fontSize: "0.75rem", color: "#94a3b8", marginTop: "0.5rem" }}>
                             Your API key is stored securely in our database and used strictly for your generations. Leave blank to remove your custom key.
+                        </p>
+                    </div>
+
+                    <div>
+                        <label style={{ display: "block", fontSize: "0.875rem", fontWeight: "500", color: "#334155", marginBottom: "0.5rem" }}>
+                            Default Average Hourly Rate ($)
+                        </label>
+                        <input
+                            type="number"
+                            placeholder="e.g. 50"
+                            value={averageRate}
+                            onChange={e => setAverageRate(e.target.value)}
+                            style={{ width: "100%", padding: "0.75rem", borderRadius: "6px", border: "1px solid #cbd5e1" }}
+                        />
+                        <p style={{ fontSize: "0.75rem", color: "#94a3b8", marginTop: "0.5rem" }}>
+                            This tells the AI exactly how to price your time when generating the proposal's Estimated Investment.
                         </p>
                     </div>
 

@@ -15,6 +15,7 @@ model User {
   logo_url       String?
   custom_api_key String?
   generation_count Int     @default(0)
+  average_rate   Float?
   proposals      Proposal[]
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt

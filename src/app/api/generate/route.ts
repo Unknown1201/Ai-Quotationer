@@ -16,6 +16,7 @@ export async function POST(req: NextRequest) {
         let apiKeyToUse = process.env.GOOGLE_GENERATIVE_AI_API_KEY || "";
         let isAnon = true;
         let userId = null;
+        let averageRate = 50; // Default fallback rate
 
         const token = req.cookies.get("auth_token")?.value;
         if (token) {
@@ -33,6 +34,9 @@ export async function POST(req: NextRequest) {
             }
         } else {
             const user = await prisma.user.findUnique({ where: { id: userId } });
+            if (user?.average_rate) {
+                averageRate = user.average_rate;
+            }
             if (user?.custom_api_key) {
                 apiKeyToUse = user.custom_api_key;
             } else {
@@ -55,7 +59,8 @@ export async function POST(req: NextRequest) {
         1. Use ${tone || "Professional"} tone.
         2. Generate a structured JSON response containing TWO keys: "markdown" and "lineItems".
         3. The "markdown" key should contain the proposal string formatted in valid Markdown with sections: Executive Summary, Detailed Scope, and Technical Stack. Do not include pricing in the markdown.
-        4. The "lineItems" key should contain an array of objects, where each object has "description" (string), "quantity" (number), and "unit_price" (number). Extract any measurable costs or features from the notes. If none exist, provide a sensible default line item for the service described.
+        4. The "lineItems" key should contain an array of objects, where each object has "description" (string), "quantity" (number), and "unit_price" (number). Extract any measurable costs or features from the notes.
+        5. CRITICAL PRICING CONTEXT: The consultant's average hourly rate is $${averageRate}/hr. If no specific prices are mentioned in the notes, use this rate to estimate costs for the line items (e.g., if a feature takes 10 hours, price it at $${averageRate * 10}). If no features are mentioned, provide a sensible default based on this hourly rate.
 
     Raw Notes:
     ${rawNotes}`;

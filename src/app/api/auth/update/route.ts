@@ -19,12 +19,15 @@ export async function PUT(req: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const { custom_api_key } = await req.json();
+        const { custom_api_key, average_rate } = await req.json();
 
-        // Allow clearing the key if they send an empty string
+        const updateData: any = {};
+        if (custom_api_key !== undefined) updateData.custom_api_key = custom_api_key || null;
+        if (average_rate !== undefined) updateData.average_rate = average_rate ? parseFloat(average_rate) : null;
+
         const updatedUser = await prisma.user.update({
             where: { id: decoded.id },
-            data: { custom_api_key: custom_api_key || null }
+            data: updateData
         });
 
         return NextResponse.json({ success: true, has_custom_key: !!updatedUser.custom_api_key });

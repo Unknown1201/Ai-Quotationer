@@ -111,8 +111,12 @@ const ProposalPDF = ({ theme, clientName, markdown, lineItems, totalAmount, show
                         <View style={styles.totalRow}>
                             <Text style={styles.totalText}>
                                 Total: ${totalAmount.toFixed(2)}
-                                {showConversion && convertedTotal ? `  (Approx: ${currencySymbol}${convertedTotal.toFixed(0)})` : ""}
                             </Text>
+                            {showConversion && convertedTotal ? (
+                                <Text style={[styles.totalText, { fontSize: 10, color: "#64748b", marginTop: 4 }]}>
+                                    (Approx: {currencySymbol}{convertedTotal.toFixed(0)})
+                                </Text>
+                            ) : null}
                         </View>
                     </View>
                 )}

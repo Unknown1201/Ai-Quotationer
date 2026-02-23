@@ -27,7 +27,8 @@ export async function GET() {
                 company_name: true,
                 logo_url: true,
                 custom_api_key: true,
-                generation_count: true
+                generation_count: true,
+                average_rate: true
             }
         });
 
@@ -43,7 +44,8 @@ export async function GET() {
                 company_name: user.company_name,
                 logo_url: user.logo_url,
                 has_custom_key: !!user.custom_api_key,
-                generation_count: user.generation_count
+                generation_count: user.generation_count,
+                average_rate: user.average_rate
             }
         });
     } catch (error) {
