@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import LineItemCalculator, { LineItem } from "./LineItemCalculator";
 import { ThemeType } from "./PDFPreview";
@@ -14,7 +14,9 @@ const PDFPreview = dynamic(() => import("./PDFPreview"), {
 const THEMES: { label: string; value: ThemeType }[] = [
     { label: "Corporate", value: "corporate" },
     { label: "Creative", value: "creative" },
-    { label: "Minimal", value: "minimal" }
+    { label: "Minimal", value: "minimal" },
+    { label: "Modern", value: "modern" },
+    { label: "Elegant", value: "elegant" }
 ];
 
 export default function LiveEditor() {
@@ -28,6 +30,29 @@ export default function LiveEditor() {
     const [isGenerating, setIsGenerating] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [savedProposalId, setSavedProposalId] = useState<string | null>(null);
+
+    // Extras Options
+    const [showConversion, setShowConversion] = useState(false);
+    const [conversionRate, setConversionRate] = useState(83.5); // Default approx INR
+    const [terms, setTerms] = useState("");
+    const [showSignatures, setShowSignatures] = useState(false);
+    const [logoUrl, setLogoUrl] = useState("");
+
+    useEffect(() => {
+        // Fetch live USD to INR rate
+        const fetchRate = async () => {
+            try {
+                const res = await fetch("https://open.er-api.com/v6/latest/USD");
+                const data = await res.json();
+                if (data?.rates?.INR) {
+                    setConversionRate(data.rates.INR);
+                }
+            } catch (err) {
+                console.error("Failed to fetch exchange rate", err);
+            }
+        };
+        fetchRate();
+    }, []);
 
     const handleGenerate = async () => {
         if (!rawNotes.trim()) return alert("Please enter client notes first.");
@@ -165,7 +190,7 @@ export default function LiveEditor() {
                     <label style={{ display: "block", fontSize: "0.875rem", fontWeight: "600", marginBottom: "0.5rem", color: "#475569" }}>
                         3. Brand Template
                     </label>
-                    <div style={{ display: "flex", gap: "1rem" }}>
+                    <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
                         {THEMES.map((t) => (
                             <label key={t.value} style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer", padding: "0.5rem 1rem", border: "1px solid", borderColor: theme === t.value ? "#3b82f6" : "#cbd5e1", borderRadius: "6px", backgroundColor: theme === t.value ? "#eff6ff" : "white" }}>
                                 <input
@@ -180,6 +205,27 @@ export default function LiveEditor() {
                         ))}
                     </div>
                 </div>
+
+                <div style={{ paddingBottom: "2rem" }}>
+                    <label style={{ display: "block", fontSize: "0.875rem", fontWeight: "600", marginBottom: "0.5rem", color: "#475569" }}>
+                        4. Extras & Branding
+                    </label>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        <input type="text" placeholder="Brand Logo URL (e.g., https://.../logo.png)" value={logoUrl} onChange={e => setLogoUrl(e.target.value)} style={{ padding: "0.5rem", borderRadius: "6px", border: "1px solid #cbd5e1", width: "100%" }} />
+
+                        <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer" }}>
+                            <input type="checkbox" checked={showConversion} onChange={e => setShowConversion(e.target.checked)} />
+                            <span style={{ fontSize: "0.875rem", color: "#334155" }}>Show Approximate INR Total (Live Rate: ~₹{conversionRate.toFixed(2)})</span>
+                        </label>
+
+                        <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer" }}>
+                            <input type="checkbox" checked={showSignatures} onChange={e => setShowSignatures(e.target.checked)} />
+                            <span style={{ fontSize: "0.875rem", color: "#334155" }}>Include Signature Blocks at end of PDF</span>
+                        </label>
+
+                        <textarea placeholder="Terms & Conditions (Optional) - Will appear before signatures" value={terms} onChange={e => setTerms(e.target.value)} style={{ width: "100%", height: "80px", padding: "0.5rem", borderRadius: "6px", border: "1px solid #cbd5e1", resize: "vertical", fontSize: "0.875rem" }} />
+                    </div>
+                </div>
             </div>
 
             {/* Right Column: PDF Preview */}
@@ -191,6 +237,12 @@ export default function LiveEditor() {
                     markdown={markdown}
                     lineItems={lineItems}
                     totalAmount={totalAmount}
+                    showConversion={showConversion}
+                    convertedTotal={totalAmount * conversionRate}
+                    currencySymbol="₹"
+                    terms={terms}
+                    showSignatures={showSignatures}
+                    logoUrl={logoUrl}
                 />
             </div>
 

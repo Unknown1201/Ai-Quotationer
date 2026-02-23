@@ -2,11 +2,34 @@
 
 import { useEffect, useState } from "react";
 import LiveEditor from "@/components/LiveEditor";
+import AuthModal from "@/components/AuthModal";
+import SettingsModal from "@/components/SettingsModal";
 
 export default function Home() {
   const [view, setView] = useState<"dashboard" | "editor">("dashboard");
   const [proposals, setProposals] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const [user, setUser] = useState<any>(null);
+  const [showAuth, setShowAuth] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+
+  const fetchUser = async () => {
+    try {
+      const res = await fetch("/api/auth/me");
+      const data = await res.json();
+      setUser(data.authenticated ? data.user : null);
+    } catch (err) {
+      console.error("Failed to fetch user");
+    }
+  };
+
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    setUser(null);
+    setProposals([]);
+    fetchUser();
+  };
 
   const fetchProposals = async () => {
     setIsLoading(true);
@@ -21,6 +44,7 @@ export default function Home() {
   };
 
   useEffect(() => {
+    fetchUser();
     if (view === "dashboard") fetchProposals();
   }, [view]);
 
@@ -31,12 +55,27 @@ export default function Home() {
           <h1 style={{ fontSize: "1.875rem", fontWeight: "bold", color: "#0f172a", margin: 0 }}>AI Proposal Generator</h1>
           <p style={{ color: "#64748b", margin: "0.25rem 0 0 0" }}>Convert messy notes to polished bids in seconds.</p>
         </div>
-        <button
-          onClick={() => setView(view === "dashboard" ? "editor" : "dashboard")}
-          style={{ padding: "0.75rem 1.5rem", backgroundColor: "#0f172a", color: "white", borderRadius: "8px", border: "none", cursor: "pointer", fontWeight: "600", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}>
-          {view === "dashboard" ? "+ Create New Proposal" : "← Back to Dashboard"}
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+          {user ? (
+            <div style={{ display: "flex", alignItems: "center", gap: "1rem", fontSize: "0.875rem", color: "#334155" }}>
+              <span>Hello, <strong>{user.company_name || user.email}</strong></span>
+              <button onClick={() => setShowSettings(true)} style={{ background: "none", border: "1px solid #cbd5e1", padding: "0.5rem 1rem", borderRadius: "6px", cursor: "pointer", fontWeight: "500" }}>Settings</button>
+              <button onClick={handleLogout} style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", fontWeight: "500", padding: 0 }}>Logout</button>
+            </div>
+          ) : (
+            <button onClick={() => setShowAuth(true)} style={{ background: "none", border: "1px solid #cbd5e1", padding: "0.5rem 1rem", borderRadius: "6px", cursor: "pointer", fontWeight: "500", color: "#334155" }}>Sign In / Register</button>
+          )}
+
+          <button
+            onClick={() => setView(view === "dashboard" ? "editor" : "dashboard")}
+            style={{ padding: "0.75rem 1.5rem", backgroundColor: "#0f172a", color: "white", borderRadius: "8px", border: "none", cursor: "pointer", fontWeight: "600", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}>
+            {view === "dashboard" ? "+ Create New Proposal" : "← Back to Dashboard"}
+          </button>
+        </div>
       </header>
+
+      {showAuth && <AuthModal onClose={() => setShowAuth(false)} onSuccess={() => { setShowAuth(false); fetchUser(); fetchProposals(); }} />}
+      {showSettings && user && <SettingsModal onClose={() => setShowSettings(false)} hasCustomKey={user.has_custom_key} generationCount={user.generation_count} onUpdate={fetchUser} />}
 
       {view === "dashboard" ? (
         <div>

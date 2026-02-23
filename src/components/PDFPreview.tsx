@@ -1,10 +1,10 @@
 "use client";
 
 import React from "react";
-import { Document, Page, Text, View, PDFViewer } from "@react-pdf/renderer";
-import { corporateTheme, creativeTheme, minimalTheme } from "@/styles/pdfThemes";
+import { Document, Page, Text, View, PDFViewer, Image } from "@react-pdf/renderer";
+import { corporateTheme, creativeTheme, minimalTheme, modernTheme, elegantTheme } from "@/styles/pdfThemes";
 
-export type ThemeType = "corporate" | "creative" | "minimal";
+export type ThemeType = "corporate" | "creative" | "minimal" | "modern" | "elegant";
 
 interface LineItem {
     id?: string;
@@ -19,14 +19,36 @@ interface PDFPreviewProps {
     markdown: string;
     lineItems: LineItem[];
     totalAmount: number;
+    showConversion?: boolean;
+    convertedTotal?: number;
+    currencySymbol?: string;
+    terms?: string;
+    showSignatures?: boolean;
+    logoUrl?: string;
 }
 
 const getStyles = (theme: ThemeType) => {
     switch (theme) {
         case "creative": return creativeTheme;
         case "minimal": return minimalTheme;
+        case "modern": return modernTheme;
+        case "elegant": return elegantTheme;
         default: return corporateTheme;
     }
+};
+
+const parseInlineStyles = (text: string) => {
+    // Simple parser for bold and italic markdown elements in react-pdf
+    const parts = text.split(/(\*\*.*?\*\*|\*.*?\*)/g);
+    return parts.map((part, index) => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+            // Using standard bold logic within the parent <Text> block's inherited font
+            return <Text key={index} style={{ fontWeight: 'bold' }}>{part.slice(2, -2)}</Text>;
+        } else if (part.startsWith('*') && part.endsWith('*')) {
+            return <Text key={index} style={{ fontStyle: 'italic' }}>{part.slice(1, -1)}</Text>;
+        }
+        return <Text key={index}>{part}</Text>;
+    });
 };
 
 const renderMarkdownToPDF = (markdown: string, styles: any) => {
@@ -38,28 +60,29 @@ const renderMarkdownToPDF = (markdown: string, styles: any) => {
         if (!trimmed) return <Text key={index} style={styles.text}>{" "}</Text>;
 
         if (trimmed.startsWith("# ")) {
-            return <Text key={index} style={styles.header}>{trimmed.replace(/^#\s/, '')}</Text>;
+            return <Text key={index} style={styles.header}>{parseInlineStyles(trimmed.replace(/^#\s/, ''))}</Text>;
         } else if (trimmed.startsWith("## ") || trimmed.startsWith("### ")) {
-            return <Text key={index} style={styles.subHeader}>{trimmed.replace(/^#+\s/, '')}</Text>;
+            return <Text key={index} style={styles.subHeader}>{parseInlineStyles(trimmed.replace(/^#+\s/, ''))}</Text>;
         } else if (trimmed.startsWith("* ") || trimmed.startsWith("- ")) {
-            return <Text key={index} style={styles.text}>• {trimmed.replace(/^[\*-]\s/, '')}</Text>;
+            return <Text key={index} style={styles.text}>• {parseInlineStyles(trimmed.replace(/^[\*-]\s/, ''))}</Text>;
         } else if (trimmed.match(/^\d+\.\s/)) {
-            return <Text key={index} style={styles.text}>{trimmed}</Text>;
+            return <Text key={index} style={styles.text}>{parseInlineStyles(trimmed)}</Text>;
         } else {
-            return <Text key={index} style={styles.text}>{trimmed}</Text>;
+            return <Text key={index} style={styles.text}>{parseInlineStyles(trimmed)}</Text>;
         }
     });
 };
 
-const ProposalPDF = ({ theme, clientName, markdown, lineItems, totalAmount }: PDFPreviewProps) => {
+const ProposalPDF = ({ theme, clientName, markdown, lineItems, totalAmount, showConversion, convertedTotal, currencySymbol, terms, showSignatures, logoUrl }: PDFPreviewProps) => {
     const styles = getStyles(theme);
     const validItems = lineItems.filter(item => item.description.trim() !== "");
 
     return (
         <Document>
             <Page size="A4" style={styles.page}>
-                <View style={{ marginBottom: 20 }}>
+                <View style={{ marginBottom: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <Text style={styles.header}>Proposal for {clientName || "Client"}</Text>
+                    {logoUrl && <Image src={logoUrl} style={{ width: 80, height: 'auto', objectFit: 'contain' }} />}
                 </View>
 
                 <View>
@@ -86,7 +109,31 @@ const ProposalPDF = ({ theme, clientName, markdown, lineItems, totalAmount }: PD
                             ))}
                         </View>
                         <View style={styles.totalRow}>
-                            <Text style={styles.totalText}>Total: ${totalAmount.toFixed(2)}</Text>
+                            <Text style={styles.totalText}>
+                                Total: ${totalAmount.toFixed(2)}
+                                {showConversion && convertedTotal ? `  (Approx: ${currencySymbol}${convertedTotal.toFixed(0)})` : ""}
+                            </Text>
+                        </View>
+                    </View>
+                )}
+
+                {terms && (
+                    <View style={{ marginTop: 30 }} wrap={false}>
+                        <Text style={styles.subHeader}>Terms & Conditions</Text>
+                        <Text style={styles.text}>{terms}</Text>
+                    </View>
+                )}
+
+                {showSignatures && (
+                    <View style={{ marginTop: 50, flexDirection: 'row', justifyContent: 'space-between' }} wrap={false}>
+                        <View style={{ width: '40%' }}>
+                            <View style={{ borderBottomWidth: 1, borderBottomColor: '#333', marginBottom: 5, height: 40 }} />
+                            <Text style={{ fontSize: 10, fontWeight: 'bold' }}>Prepared By</Text>
+                        </View>
+                        <View style={{ width: '40%' }}>
+                            <View style={{ borderBottomWidth: 1, borderBottomColor: '#333', marginBottom: 5, height: 40 }} />
+                            <Text style={{ fontSize: 10, fontWeight: 'bold' }}>Accepted By: {clientName || "Client"}</Text>
+                            <Text style={{ fontSize: 10, color: '#666', marginTop: 3 }}>Date: ________________________</Text>
                         </View>
                     </View>
                 )}

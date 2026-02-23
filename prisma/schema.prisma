@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -11,9 +11,11 @@ model User {
   id            String     @id @default(cuid())
   email         String     @unique
   password_hash String
-  company_name  String?
-  logo_url      String?
-  proposals     Proposal[]
+  company_name   String?
+  logo_url       String?
+  custom_api_key String?
+  generation_count Int     @default(0)
+  proposals      Proposal[]
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 }

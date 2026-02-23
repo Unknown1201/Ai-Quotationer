@@ -44,3 +44,33 @@ export const minimalTheme = StyleSheet.create({
     totalRow: { flexDirection: "row", marginTop: 10, borderTopWidth: 2, borderTopColor: "#000", paddingVertical: 10 },
     totalText: { fontSize: 11, textTransform: "uppercase", textAlign: "right", width: "100%" }
 });
+
+export const modernTheme = StyleSheet.create({
+    page: { padding: 45, fontFamily: "Helvetica", color: "#111827", backgroundColor: "#f9fafb" },
+    header: { fontSize: 26, marginBottom: 15, color: "#111827", fontWeight: "bold" },
+    subHeader: { fontSize: 16, marginTop: 25, marginBottom: 12, color: "#4f46e5", fontWeight: "bold", textTransform: "uppercase", letterSpacing: 1 },
+    text: { fontSize: 11, lineHeight: 1.6, marginBottom: 12, color: "#374151" },
+    table: { display: "flex", width: "auto", marginTop: 20, backgroundColor: "#ffffff", borderRadius: 8, overflow: "hidden", border: "1px solid #e5e7eb" },
+    tableRow: { flexDirection: "row", borderBottomWidth: 1, borderBottomColor: "#f3f4f6" },
+    tableColHeader: { width: "25%", padding: 10, backgroundColor: "#f3f4f6" },
+    tableCol: { width: "25%", padding: 10 },
+    tableCellHeader: { fontSize: 10, fontWeight: "bold", color: "#4b5563", textTransform: "uppercase" },
+    tableCell: { fontSize: 10, color: "#1f2937" },
+    totalRow: { flexDirection: "row", padding: 12, backgroundColor: "#e0e7ff", borderBottomLeftRadius: 8, borderBottomRightRadius: 8 },
+    totalText: { fontSize: 12, fontWeight: "bold", textAlign: "right", width: "100%", color: "#312e81" }
+});
+
+export const elegantTheme = StyleSheet.create({
+    page: { padding: 50, fontFamily: "Times-Roman", color: "#3e2723", backgroundColor: "#fff" },
+    header: { fontSize: 28, marginBottom: 25, textAlign: "center", color: "#1b5e20", textTransform: "capitalize" },
+    subHeader: { fontSize: 16, marginTop: 25, marginBottom: 15, color: "#2e7d32", borderBottomWidth: 1, borderBottomColor: "#a5d6a7", paddingBottom: 8 },
+    text: { fontSize: 12, lineHeight: 1.8, marginBottom: 12, color: "#4e342e" },
+    table: { display: "flex", width: "auto", marginTop: 25, border: "1px solid #c8e6c9" },
+    tableRow: { flexDirection: "row", borderBottomWidth: 1, borderBottomColor: "#e8f5e9" },
+    tableColHeader: { width: "25%", padding: 12, backgroundColor: "#e8f5e9" },
+    tableCol: { width: "25%", padding: 12 },
+    tableCellHeader: { fontSize: 11, fontWeight: "bold", color: "#1b5e20" },
+    tableCell: { fontSize: 11, color: "#3e2723" },
+    totalRow: { flexDirection: "row", marginTop: 5, padding: 12, borderTopWidth: 2, borderTopColor: "#81c784" },
+    totalText: { fontSize: 13, fontWeight: "bold", textAlign: "right", width: "100%", color: "#1b5e20" }
+});

@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { PrismaClient } from "@prisma/client";
+import { verifyToken } from "@/lib/auth";
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY || "");
+const prisma = new PrismaClient();
 
 export async function POST(req: NextRequest) {
     try {
@@ -11,9 +13,44 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "rawNotes are required." }, { status: 400 });
         }
 
+        let apiKeyToUse = process.env.GOOGLE_GENERATIVE_AI_API_KEY || "";
+        let isAnon = true;
+        let userId = null;
+
+        const token = req.cookies.get("auth_token")?.value;
+        if (token) {
+            const decoded: any = verifyToken(token);
+            if (decoded && decoded.id) {
+                isAnon = false;
+                userId = decoded.id;
+            }
+        }
+
+        if (isAnon) {
+            let anonCount = parseInt(req.cookies.get("anon_count")?.value || "0");
+            if (anonCount >= 3) {
+                return NextResponse.json({ error: "Free limit reached. Please log in or create an account to get 3 more!" }, { status: 403 });
+            }
+        } else {
+            const user = await prisma.user.findUnique({ where: { id: userId } });
+            if (user?.custom_api_key) {
+                apiKeyToUse = user.custom_api_key;
+            } else {
+                if (user && user.generation_count >= 3) {
+                    return NextResponse.json({ error: "Usage limit reached. Please add your own Gemini API key in settings for unlimited access." }, { status: 403 });
+                }
+                if (user) {
+                    await prisma.user.update({
+                        where: { id: userId },
+                        data: { generation_count: { increment: 1 } }
+                    });
+                }
+            }
+        }
+
+        const genAI = new GoogleGenerativeAI(apiKeyToUse);
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-        // As per PRD
         const prompt = `You are a professional business consultant. Take the following raw notes and format them into a structured business proposal. Follow these rules strictly:
         1. Use ${tone || "Professional"} tone.
         2. Generate a structured JSON response containing TWO keys: "markdown" and "lineItems".
@@ -41,12 +78,19 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Failed to parse AI output." }, { status: 500 });
         }
 
-        return NextResponse.json({
+        const responseJson = NextResponse.json({
             markdown: parsed.markdown?.trim() || "",
             lineItems: parsed.lineItems || []
         });
+
+        if (isAnon) {
+            let anonCount = parseInt(req.cookies.get("anon_count")?.value || "0");
+            responseJson.cookies.set("anon_count", (anonCount + 1).toString(), { maxAge: 60 * 60 * 24 * 365, path: "/" });
+        }
+
+        return responseJson;
     } catch (error) {
         console.error("Gemini API Error:", error);
-        return NextResponse.json({ error: "Failed to generate proposal." }, { status: 500 });
+        return NextResponse.json({ error: "Failed to generate proposal or Invalid API Key." }, { status: 500 });
     }
 }
